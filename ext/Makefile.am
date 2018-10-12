@@ -172,6 +172,12 @@ else
 LIBMMS_DIR=
 endif
 
+if USE_LIBDE265
+LIBMMS_DIR=libde265
+else
+LIBDE265_DIR=
+endif
+
 if USE_MODPLUG
 MODPLUG_DIR=modplug
 else
@@ -339,6 +345,7 @@ SRTP_DIR=srtp
 else
 SRTP_DIR=
 endif
+
 
 if USE_GME
 GME_DIR=gme
