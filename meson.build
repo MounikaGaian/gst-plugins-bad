@@ -206,6 +206,7 @@ check_functions = [
 # check token HAVE_LIBGCRYPT
 # check token HAVE_LIBGME_ACCURACY
 # check token HAVE_LIBMMS
+# check token HAVE_LIBDE265
 # check token HAVE_LIBNSL
 # check token HAVE_LIBSOCKET
 # check token HAVE_LIBUSB
@@ -255,7 +256,6 @@ check_functions = [
 # check token HAVE_SPANDSP
 # check token HAVE_SPC
 # check token HAVE_SRTP
-# check token HAVE_LIBDE265
 # check token HAVE_SSH2
 # check token HAVE_TELETEXTDEC
 # check token HAVE_TIGER

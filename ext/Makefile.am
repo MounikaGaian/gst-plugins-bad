@@ -160,11 +160,6 @@ else
 LV2_DIR =
 endif
 
-if USE_LIBDE265
-LIBDE265_DIR = libde265
-else
-LIBDE265_DIR =
-endif
 
 if USE_LIBMMS
 LIBMMS_DIR=libmms
@@ -173,7 +168,7 @@ LIBMMS_DIR=
 endif
 
 if USE_LIBDE265
-LIBMMS_DIR=libde265
+LIBDE265_DIR=libde265
 else
 LIBDE265_DIR=
 endif

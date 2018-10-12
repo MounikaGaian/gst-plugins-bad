@@ -1600,13 +1600,7 @@ AG_GST_CHECK_FEATURE(SRT, [srt library], srt, [
   AC_SUBST(SRT_LIBS)
   AC_SUBST(SRT_CFLAGS)
 ])
-dnl *** liblibde265 ***
-translit(dnm, m, l) AM_CONDITIONAL(USE_LIBDE265, true)
-AG_GST_CHECK_FEATURE(SRT, [libde265 library], libde265, [
-PKG_CHECK_MODULES(LIBDE265, libde265, HAVE_SRT="yes", HAVE_LIBDE265=no)
-AC_SUBST(LIBDE265_LIBS)
-AC_SUBST(LIBDE265_CFLAGS)
-])
+
 dnl *** libsrtp ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_SRTP, true)
 AG_GST_CHECK_FEATURE(SRTP, [srtp library], srtp, [
