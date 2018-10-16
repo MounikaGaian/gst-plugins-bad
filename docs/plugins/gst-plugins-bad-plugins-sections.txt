@@ -4271,6 +4271,24 @@ GST_TYPE_Z_BAR
 gst_z_bar_get_type
 </SECTION>
 
+
+<SECTION>
+<FILE>element-libde265</FILE>
+<TITLE>libde265</TITLE>
+GstLibDe265
+<SUBSECTION Standard>
+GstLibDe265Class
+GST_LIB_DE265
+GST_LIB_DE265_CAST
+GST_IS_LIB_DE265
+GST_LIB_DE265_CLASS
+GST_IS_LIB_DE265_CLASS
+GST_TYPE_LIB_DE265
+<SUBSECTION Private>
+gst_lib_de265_get_type
+</SECTION>
+
+
 <SECTION>
 <FILE>element-zebrastripe</FILE>
 <TITLE>zebrastripe</TITLE>
