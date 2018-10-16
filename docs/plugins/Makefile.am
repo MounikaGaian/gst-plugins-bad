@@ -109,6 +109,7 @@ EXTRA_HFILES = \
 	$(top_srcdir)/ext/webrtcdsp/gstwebrtcdsp.h \
 	$(top_srcdir)/ext/webrtcdsp/gstwebrtcechoprobe.h \
 	$(top_srcdir)/ext/zbar/gstzbar.h \
+    $(top_srcdir)/ext/libde265/libde265-dec.h \
 	$(top_srcdir)/gst/aiff/aiffparse.h \
 	$(top_srcdir)/gst/aiff/aiffmux.h \
 	$(top_srcdir)/gst/autoconvert/gstautoconvert.h \
