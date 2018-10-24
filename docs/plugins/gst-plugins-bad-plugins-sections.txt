@@ -2297,6 +2297,22 @@ gst_mms_get_type
 </SECTION>
 
 <SECTION>
+<FILE>element-de265src</FILE>
+<TITLE>de265src</TITLE>
+Gstde265_dec
+<SUBSECTION Standard>
+GstDE265_DEC_Class
+GST_DE265_DEC
+GST_DE265_DEC_CAST
+GST_IS_DE265_DEC
+GST_DE265_DEC_CLASS
+GST_IS_DE265_DEC_CLASS
+GST_TYPE_DE265_DEC
+<SUBSECTION Private>
+gst_de265_dec_get_type
+</SECTION>
+
+<SECTION>
 <FILE>element-mxfdemux</FILE>
 <TITLE>mxfdemux</TITLE>
 GstMXFDemux
@@ -4270,24 +4286,6 @@ GST_TYPE_Z_BAR
 <SUBSECTION Private>
 gst_z_bar_get_type
 </SECTION>
-
-
-<SECTION>
-<FILE>element-de265</FILE>
-<TITLE>de265</TITLE>
-GstDe265
-<SUBSECTION Standard>
-GstDe265Class
-GST_DE265
-GST_DE265_CAST
-GST_IS_DE265
-GST_DE265_CLASS
-GST_IS_DE265_CLASS
-GST_TYPE_DE265
-<SUBSECTION Private>
-gst_de265_get_type
-</SECTION>
-
 
 <SECTION>
 <FILE>element-zebrastripe</FILE>
