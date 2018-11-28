@@ -56,6 +56,7 @@ typedef struct _GstMsdkVP9DecClass GstMsdkVP9DecClass;
 struct _GstMsdkVP9Dec
 {
   GstMsdkDec base;
+  guint output_order;
 };
 
 struct _GstMsdkVP9DecClass

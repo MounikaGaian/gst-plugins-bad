@@ -53,6 +53,7 @@ static const struct map gst_msdk_video_format_to_mfx_map[] = {
   GST_VIDEO_INFO_TO_MFX_MAP (NV12, YUV420, NV12),
   GST_VIDEO_INFO_TO_MFX_MAP (YV12, YUV420, YV12),
   GST_VIDEO_INFO_TO_MFX_MAP (I420, YUV420, YV12),
+  GST_VIDEO_INFO_TO_MFX_MAP (P010_10LE, YUV420, P010),
   GST_VIDEO_INFO_TO_MFX_MAP (YUY2, YUV422, YUY2),
   GST_VIDEO_INFO_TO_MFX_MAP (UYVY, YUV422, UYVY),
   GST_VIDEO_INFO_TO_MFX_MAP (BGRA, YUV444, RGB4),
@@ -273,6 +274,12 @@ gst_msdk_set_mfx_frame_info_from_video_info (mfxFrameInfo * mfx_info,
   mfx_info->ChromaFormat =
       gst_msdk_get_mfx_chroma_from_format (GST_VIDEO_INFO_FORMAT (info));
 
+  if (mfx_info->FourCC == MFX_FOURCC_P010) {
+    mfx_info->BitDepthLuma = 10;
+    mfx_info->BitDepthChroma = 10;
+    mfx_info->Shift = 1;
+  }
+
   return;
 }
 
@@ -310,4 +317,17 @@ gst_msdk_get_surface_from_buffer (GstBuffer * buf)
   }
 
   return NULL;
+}
+
+GstVideoFormat
+gst_msdk_get_video_format_from_mfx_fourcc (mfxU32 fourcc)
+{
+  const struct map *m = gst_msdk_video_format_to_mfx_map;
+
+  for (; m->mfx_fourcc != 0; m++) {
+    if (m->mfx_fourcc == fourcc)
+      return m->format;
+  }
+
+  return GST_VIDEO_FORMAT_UNKNOWN;
 }

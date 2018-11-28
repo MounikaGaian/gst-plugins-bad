@@ -44,6 +44,7 @@ if cc.get_id() == 'msvc'
       '/wd4146', # unary minus on unsigned (beware INT_MIN)
       '/wd4244', # lossy type conversion (e.g. double -> int)
       '/wd4305', # truncating type conversion (e.g. double -> float)
+      cc.get_supported_arguments(['/utf-8']), # set the input encoding to utf-8
   ]
   add_project_arguments(msvc_args, language : 'c')
   add_project_arguments(msvc_args, language : 'cpp')
@@ -206,7 +207,6 @@ check_functions = [
 # check token HAVE_LIBGCRYPT
 # check token HAVE_LIBGME_ACCURACY
 # check token HAVE_LIBMMS
-# check token HAVE_LIBDE265
 # check token HAVE_LIBNSL
 # check token HAVE_LIBSOCKET
 # check token HAVE_LIBUSB
@@ -498,6 +498,11 @@ if orc_dep.found() and orcc.found()
 else
   message('Orc Compiler not found or disabled, will use backup C code')
   cdata.set('DISABLE_ORC', 1)
+endif
+
+gnustl_dep = declare_dependency()
+if host_system == 'android'
+  gnustl_dep = dependency('gnustl', required : false)
 endif
 
 if gst_dep.type_name() == 'internal'

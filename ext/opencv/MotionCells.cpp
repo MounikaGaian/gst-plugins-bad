@@ -49,6 +49,9 @@
 #include <errno.h>
 #include "MotionCells.h"
 #include <opencv2/imgproc.hpp>
+#if (CV_MAJOR_VERSION >= 4)
+#include <opencv2/imgproc/imgproc_c.h>
+#endif
 
 MotionCells::MotionCells ()
 {
@@ -198,7 +201,7 @@ MotionCells::performDetectionMotionCells (IplImage * p_frame,
         delete[]m_motioncellsidxcstr;
       m_motioncells_idx_count = m_MotionCells.size () * MSGLEN; //one motion cell idx: (lin idx : col idx,) it's up to 6 character except last motion cell idx
       m_motioncellsidxcstr = new char[m_motioncells_idx_count];
-      char *tmpstr = new char[MSGLEN+ 1];
+      char *tmpstr = new char[MSGLEN + 1];
       tmpstr[0] = 0;
       for (unsigned int i = 0; i < m_MotionCells.size (); i++) {
         CvPoint pt1, pt2;
@@ -223,10 +226,10 @@ MotionCells::performDetectionMotionCells (IplImage * p_frame,
         }
 
         if (i < m_MotionCells.size () - 1) {
-          snprintf (tmpstr, MSGLEN+1, "%d:%d,", m_MotionCells.at (i).lineidx,
+          snprintf (tmpstr, MSGLEN + 1, "%d:%d,", m_MotionCells.at (i).lineidx,
               m_MotionCells.at (i).colidx);
         } else {
-          snprintf (tmpstr, MSGLEN+1, "%d:%d", m_MotionCells.at (i).lineidx,
+          snprintf (tmpstr, MSGLEN + 1, "%d:%d", m_MotionCells.at (i).lineidx,
               m_MotionCells.at (i).colidx);
         }
         if (i == 0)
