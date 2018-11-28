@@ -40,12 +40,6 @@ else
 check_assrender =
 endif
 
-if USE_PANGO
-check_closedcaption = elements/cccombiner elements/ccextractor
-else
-check_closedcaption =
-endif
-
 if USE_DASH
 check_dash = elements/dash_mpd
 check_dash_demux = elements/dash_demux
@@ -238,7 +232,6 @@ VALGRIND_TESTS_DISABLE = \
 #            actually looks at the data and doesn't like randomness
 noinst_PROGRAMS = \
 	pipelines/streamheader \
-	$(check_mssdemux) \
 	$(check_dash_demux) \
 	$(check_ipcpipeline) \
 	$(check_neon)
@@ -246,7 +239,6 @@ noinst_PROGRAMS = \
 check_PROGRAMS = \
 	generic/states \
 	$(check_assrender) \
-	$(check_closedcaption) \
 	$(check_dash) \
 	$(check_dtls) \
 	$(check_faac)  \
@@ -255,6 +247,7 @@ check_PROGRAMS = \
 	$(check_voamrwbenc) \
 	$(check_mpeg2enc)  \
 	$(check_mplex)     \
+	$(check_mssdemux) \
 	$(check_ofa)        \
 	$(check_kate)  \
 	$(check_opencv) \
@@ -457,12 +450,6 @@ elements_camerabin_LDADD = \
         $(GST_PLUGINS_BASE_LIBS) -lgstpbutils-$(GST_API_VERSION) \
         $(GST_BASE_LIBS) $(GST_LIBS) $(LDADD)
 elements_camerabin_SOURCES = elements/camerabin.c
-
-elements_cccombiner_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
-elements_cccombiner_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_VIDEO_LIBS) $(GST_BASE_LIBS) $(LDADD)
-
-elements_ccextractor_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
-elements_ccextractor_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_VIDEO_LIBS) $(GST_BASE_LIBS) $(LDADD)
 
 elements_jifmux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(EXIF_CFLAGS) $(AM_CFLAGS)
 elements_jifmux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgsttag-$(GST_API_VERSION) $(GST_CHECK_LIBS) $(EXIF_LIBS) $(LDADD)

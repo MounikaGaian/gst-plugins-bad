@@ -45,6 +45,8 @@
 #ifndef __GST_HANDDETECT_H__
 #define __GST_HANDDETECT_H__
 
+#include <cv.h>
+
 #include <gst/opencv/gstopencvvideofilter.h>
 /* opencv */
 #include <opencv2/core.hpp>

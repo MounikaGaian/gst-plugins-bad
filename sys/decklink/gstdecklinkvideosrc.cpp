@@ -836,48 +836,22 @@ extract_cc_from_vbi (GstDecklinkVideoSrc * self, GstBuffer ** buffer,
 
       while (gst_video_vbi_parser_get_ancillary (self->vbiparser,
               &gstanc) == GST_VIDEO_VBI_PARSER_RESULT_OK) {
-        switch (GST_VIDEO_ANCILLARY_DID16 (&gstanc)) {
-          case GST_VIDEO_ANCILLARY_DID16_S334_EIA_708:
-            GST_DEBUG_OBJECT (self,
-                "Adding CEA-708 CDP meta to buffer for line %d", fi);
-            GST_MEMDUMP_OBJECT (self, "CDP", gstanc.data, gstanc.data_count);
-            gst_buffer_add_video_caption_meta (*buffer,
-                GST_VIDEO_CAPTION_TYPE_CEA708_CDP, gstanc.data,
-                gstanc.data_count);
-
-            break;
-          case GST_VIDEO_ANCILLARY_DID16_S334_EIA_608:
-            GST_DEBUG_OBJECT (self,
-                "Adding CEA-608 meta to buffer for line %d", fi);
-            GST_MEMDUMP_OBJECT (self, "CEA608", gstanc.data, gstanc.data_count);
-            /* The first byte actually contains the field and line offset but
-             * for CEA608-in-CEA708 we can't store the line offset, and it's
-             * generally not needed
-             */
-            gstanc.data[0] = (gstanc.data[0] & 0x80) ? 0xFD : 0xFC;
-            gst_buffer_add_video_caption_meta (*buffer,
-                GST_VIDEO_CAPTION_TYPE_CEA608_IN_CEA708_RAW, gstanc.data,
-                gstanc.data_count);
-            break;
-          default:
-            /* otherwise continue looking */
-            continue;
+        if (GST_VIDEO_ANCILLARY_DID16 (&gstanc) ==
+            GST_VIDEO_ANCILLARY_DID16_S334_EIA_708) {
+          GST_DEBUG_OBJECT (self,
+              "Adding CEA-708 CDP meta to buffer for line %d", fi);
+          GST_MEMDUMP_OBJECT (self, "CDP", gstanc.data, gstanc.data_count);
+          gst_buffer_add_video_caption_meta (*buffer,
+              GST_VIDEO_CAPTION_TYPE_CEA708_CDP, gstanc.data,
+              gstanc.data_count);
+          found = TRUE;
+          self->last_cc_vbi_line = fi;
+          break;
         }
-
-        found = TRUE;
-        self->last_cc_vbi_line = fi;
-        break;
       }
     }
 
-    /* If we didn't find it at the previous line, start again searching from
-     * line 1 onwards */
-    if (!found && (gint) self->last_cc_vbi_line != -1) {
-      self->last_cc_vbi_line = -1;
-      fi = 1;
-    } else {
-      fi++;
-    }
+    fi++;
   }
 
   if (!found)
@@ -1141,7 +1115,6 @@ gst_decklink_video_src_open (GstDecklinkVideoSrc * self)
   g_assert (mode != NULL);
   g_mutex_lock (&self->input->lock);
   self->input->mode = mode;
-  self->input->format = self->caps_format;
   self->input->got_video_frame = gst_decklink_video_src_got_frame;
   self->input->start_streams = gst_decklink_video_src_start_streams;
   g_mutex_unlock (&self->input->lock);

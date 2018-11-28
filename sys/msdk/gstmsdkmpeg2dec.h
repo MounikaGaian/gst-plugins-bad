@@ -55,7 +55,6 @@ typedef struct _GstMsdkMPEG2DecClass GstMsdkMPEG2DecClass;
 struct _GstMsdkMPEG2Dec
 {
   GstMsdkDec base;
-  guint output_order;
 };
 
 struct _GstMsdkMPEG2DecClass

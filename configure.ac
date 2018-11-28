@@ -946,21 +946,23 @@ AG_GST_CHECK_FEATURE(CUDA, [NVIDIA CUDA API],, [
       CUDA_LIBS="-L$CUDA_PREFIX/lib -L$CUDA_PREFIX/lib64 -L$CUDA_PREFIX/lib/stubs -L$CUDA_PREFIX/lib64/stubs -lcuda -lcudart"
     fi
   else
-    PKG_CHECK_MODULES([CUDA], [cuda-10.0 cudart-10.0],, [
-      PKG_CHECK_MODULES([CUDA], [cuda-9.2 cudart-9.2],, [
-        PKG_CHECK_MODULES([CUDA], [cuda-9.1 cudart-9.1],, [
-          PKG_CHECK_MODULES([CUDA], [cuda-9.0 cudart-9.0],, [
-            PKG_CHECK_MODULES([CUDA], [cuda-8.0 cudart-8.0],, [
-              PKG_CHECK_MODULES([CUDA], [cuda-7.5 cudart-7.5],, [
-                PKG_CHECK_MODULES([CUDA], [cuda-7.0 cudart-7.0],, [
-                  PKG_CHECK_MODULES([CUDA], [cuda-6.5 cudart-6.5],, [
-                    AC_MSG_WARN([Could not find cuda headers/libraries])])])])])])])])])
+    PKG_CHECK_MODULES([CUDA], [cuda-9.2 cudart-9.2],, [
+      PKG_CHECK_MODULES([CUDA], [cuda-9.1 cudart-9.1],, [
+        PKG_CHECK_MODULES([CUDA], [cuda-9.0 cudart-9.0],, [
+          PKG_CHECK_MODULES([CUDA], [cuda-8.0 cudart-8.0],, [
+            PKG_CHECK_MODULES([CUDA], [cuda-7.5 cudart-7.5],, [
+              PKG_CHECK_MODULES([CUDA], [cuda-7.0 cudart-7.0],, [
+                PKG_CHECK_MODULES([CUDA], [cuda-6.5 cudart-6.5],, [
+                  AC_MSG_WARN([Could not find cuda headers/libraries])])])])])])])])
   fi
 
   HAVE_CUDA_H=no
   HAVE_CUDART_H=no
+  HAVE_CUDA_DYN_H=no
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CUDA_CFLAGS $save_CPPFLAGS "
+  AC_CHECK_HEADER([dynlink_cuda.h], [HAVE_CUDA_DYN_H=yes],
+      AC_MSG_WARN([Could not find dynlink_cuda.h]))
   AC_CHECK_HEADER([cuda.h], [HAVE_CUDA_H=yes],
       AC_MSG_WARN([Could not find cuda.h]))
   AC_CHECK_HEADER([cuda_runtime_api.h], [HAVE_CUDART_H=yes],
@@ -982,8 +984,15 @@ AG_GST_CHECK_FEATURE(CUDA, [NVIDIA CUDA API],, [
 dnl *** NVDEC ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_NVDEC, true)
 AG_GST_CHECK_FEATURE(NVDEC, [nvdec], nvdec, [
+  HAVE_NVCUVID_H=no
+  HAVE_NCUVID_DYN_H=no
   save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CUDA_CFLAGS $save_CPPFLAGS"
+  AC_CHECK_HEADER([nvcuvid.h], [HAVE_NVCUVID_H=yes],
+      AC_MSG_WARN([Could not find nvcuvid.h]))
+  AC_CHECK_HEADER([dynlink_nvcuvid.h], [HAVE_NVCUVID_DYN_H=yes],
+      AC_MSG_WARN([Could not find dynlink_nvcuvid.h]))
+
   CPPFLAGS=$save_CPPFLAGS
 
   HAVE_NVCUVID=no
@@ -993,7 +1002,12 @@ AG_GST_CHECK_FEATURE(NVDEC, [nvdec], nvdec, [
       AC_MSG_WARN([Could not find library nvcuvid]))
   LIBS="$save_LIBS"
 
-  if test "x$HAVE_NVCUVID" = "xyes"; then
+  AM_CONDITIONAL(USE_DYNLINK_NVDEC, false)
+  if test "x$HAVE_NVCUVID_DYN_H" = "xyes" -a "x$HAVE_NVCUVID" = "xyes"; then
+    HAVE_NVDEC=yes
+    AM_CONDITIONAL(USE_DYNLINK_NVDEC, true)
+    AC_DEFINE(HAVE_DYNLINK_HEADERS_NVDEC, 1, [Define if dynlink headers for nvdec are available])
+  elif test "x$HAVE_NVCUVID_H" = "xyes" -a "x$HAVE_NVCUVID" = "xyes"; then
     HAVE_NVDEC=yes
   else
     HAVE_NVDEC=no
@@ -1003,6 +1017,26 @@ AG_GST_CHECK_FEATURE(NVDEC, [nvdec], nvdec, [
 dnl *** NVENC ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_NVENC, true)
 AG_GST_CHECK_FEATURE(NVENC, [NVIDIA Encode API], nvenc, [
+  dnl nvEncodeAPI.h header
+  HAVE_NVENCODEAPI_H=no
+  AC_ARG_VAR(NVENCODE_CFLAGS, [C compiler flags for NvEncodeAPI.h])
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$NVENCODE_CFLAGS $save_CPPFLAGS"
+  AC_CHECK_HEADER([nvEncodeAPI.h], [
+      AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <nvEncodeAPI.h>
+          #if NVENCAPI_MAJOR_VERSION < 5
+          #error "Need nvEncodeAPI.h >= 5.0"
+          #endif
+          ]])], [
+          HAVE_NVENCODEAPI_H=yes
+          ], [
+          AC_MSG_WARN([nvEncodeAPI.h must be >= 5.0])
+          ])
+      ],
+      AC_MSG_WARN([Could not find nvEncodeAPI.h]))
+  AC_SUBST(NVENCODE_CFLAGS)
+  CPPFLAGS="$save_CPPFLAGS"
+
   dnl libnvnidia-encode library
   HAVE_NVENCODE_LIB=no
   AC_ARG_VAR(NVENCODE_LIBS, [linker flags for nvidia-encode])
@@ -1019,6 +1053,7 @@ AG_GST_CHECK_FEATURE(NVENC, [NVIDIA Encode API], nvenc, [
       -a "x$HAVE_CUDART_H" = "xyes" \
       -a "x$HAVE_CUDA_LIB" = "xyes" \
       -a "x$HAVE_CUDART_LIB" = "xyes" \
+      -a "x$HAVE_NVENCODEAPI_H" = "xyes" \
       -a "x$HAVE_NVENCODE_LIB" = "xyes"; then
     HAVE_NVENC="yes"
     if test "x$GST_GL_HAVE_API_GL" = "x1"; then
@@ -1046,7 +1081,6 @@ AG_GST_CHECK_FEATURE(TINYALSA, [tinyalsa], tinyalsa, [
 dnl check for intel mediasdk
 translit(dnm, m, l) AM_CONDITIONAL(USE_MSDK, true)
 AG_GST_CHECK_FEATURE(MSDK, [Intel MediaSDK], msdk, [
-  AG_GST_PKG_CHECK_MODULES(GST_ALLOCATORS, gstreamer-allocators-1.0)
   PKG_CHECK_MODULES(G_UDEV, gudev-1.0 , [
           AC_DEFINE([HAVE_GUDEV], 1, [Define if gudev is installed])
           HAVE_GUDEV="yes" ],
@@ -1846,7 +1880,7 @@ AG_GST_CHECK_FEATURE(OPENCV, [opencv plugins], opencv, [
   dnl a new version and the no-backward-compatibility define. (There doesn't
   dnl seem to be a switch to suppress the warnings the cvcompat.h header
   dnl causes.)
-  PKG_CHECK_MODULES([OPENCV], [opencv >= 3.0.0 opencv < 3.5.0] , [
+  PKG_CHECK_MODULES(OPENCV, opencv >= 3.0.0 opencv < 3.5.0 , [
     AC_PROG_CXX
     AC_LANG([C++])
     OLD_CPPFLAGS=$CPPFLAGS
@@ -1872,41 +1906,8 @@ AG_GST_CHECK_FEATURE(OPENCV, [opencv plugins], opencv, [
       HAVE_OPENCV="yes"
     fi
   ], [
-    PKG_CHECK_MODULES([OPENCV], [opencv4 >= 4.0.0 opencv4 < 4.1.0] , [
-    AC_PROG_CXX
-    AC_LANG([C++])
-    OLD_CPPFLAGS=$CPPFLAGS
-    CPPFLAGS=$OPENCV_CFLAGS
-    something_not_found=no
-    AC_CHECK_HEADERS([opencv2/bgsegm.hpp \
-                      opencv2/calib3d.hpp \
-                      opencv2/core.hpp \
-                      opencv2/imgcodecs/legacy/constants_c.h \
-                      opencv2/imgproc/imgproc_c.h \
-                      opencv2/core/types_c.h \
-                      opencv2/core/core_c.h \
-                      opencv2/imgproc.hpp \
-                      opencv2/objdetect.hpp \
-                      opencv2/opencv.hpp \
-                      opencv2/video.hpp \
-                      opencv2/bgsegm.hpp], [], [something_not_found=yes])
-
-    CPPFLAGS=$OLD_CPPFLAGS
-    AC_LANG([C])
-
-    if test $something_not_found = "yes"; then
-      AC_MSG_RESULT([not all opencv2 headers were found])
-      HAVE_OPENCV="no"
-    else
-      HAVE_OPENCV="yes"
-    fi
-  ], [
     HAVE_OPENCV="no"
   ])
-  ])
-  OPENCV_PREFIX="`$PKG_CONFIG --variable=prefix opencv`"
-  AC_DEFINE_UNQUOTED(OPENCV_PREFIX, "$OPENCV_PREFIX", [opencv install prefix])
-  AC_SUBST(OPENCV_PREFIX)
   OPENCV_PREFIX="`$PKG_CONFIG --variable=prefix opencv`"
   AC_DEFINE_UNQUOTED(OPENCV_PREFIX, "$OPENCV_PREFIX", [opencv install prefix])
   AC_SUBST(OPENCV_PREFIX)

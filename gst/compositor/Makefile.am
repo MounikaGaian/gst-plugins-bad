@@ -25,4 +25,5 @@ libgstcompositor_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 # headers we need but don't want installed
 noinst_HEADERS = \
 	blend.h \
-	compositor.h
+	compositor.h \
+	compositorpad.h

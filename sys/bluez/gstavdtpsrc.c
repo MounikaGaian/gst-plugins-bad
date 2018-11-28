@@ -36,8 +36,6 @@
 GST_DEBUG_CATEGORY_STATIC (avdtpsrc_debug);
 #define GST_CAT_DEFAULT (avdtpsrc_debug)
 
-#define DEFAULT_VOLUME 127
-
 enum
 {
   PROP_0,
@@ -108,7 +106,7 @@ gst_avdtp_src_class_init (GstAvdtpSrcClass * klass)
       g_param_spec_uint ("transport-volume",
           "Transport volume",
           "Volume of the transport (only valid if transport is acquired)",
-          0, 127, DEFAULT_VOLUME, G_PARAM_READWRITE));
+          0, 127, 127, G_PARAM_READWRITE));
 
   gst_element_class_set_static_metadata (element_class,
       "Bluetooth AVDTP Source",
@@ -129,7 +127,6 @@ gst_avdtp_src_init (GstAvdtpSrc * avdtpsrc)
   avdtpsrc->poll = gst_poll_new (TRUE);
 
   avdtpsrc->duration = GST_CLOCK_TIME_NONE;
-  avdtpsrc->transport_volume = DEFAULT_VOLUME;
 
   gst_base_src_set_format (GST_BASE_SRC (avdtpsrc), GST_FORMAT_TIME);
   gst_base_src_set_live (GST_BASE_SRC (avdtpsrc), TRUE);
@@ -160,7 +157,8 @@ gst_avdtp_src_get_property (GObject * object, guint prop_id,
       break;
 
     case PROP_TRANSPORT_VOLUME:
-      g_value_set_uint (value, avdtpsrc->transport_volume);
+      g_value_set_uint (value,
+          gst_avdtp_connection_get_volume (&avdtpsrc->conn));
       break;
 
     default:
@@ -182,7 +180,7 @@ gst_avdtp_src_set_property (GObject * object, guint prop_id,
       break;
 
     case PROP_TRANSPORT_VOLUME:
-      avdtpsrc->transport_volume = g_value_get_uint (value);
+      /* This is no-op because setting is handled via a GBinding */
       break;
 
     default:

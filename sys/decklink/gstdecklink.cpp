@@ -791,18 +791,12 @@ public:
       VideoInputFormatChanged (BMDVideoInputFormatChangedEvents,
       IDeckLinkDisplayMode * mode, BMDDetectedVideoInputFormatFlags formatFlags)
   {
-    BMDPixelFormat pixelFormat;
+    BMDPixelFormat pixelFormat = bmdFormat8BitYUV;
 
     GST_INFO ("Video input format changed");
 
-    if ((formatFlags & bmdDetectedVideoInputRGB444)
-        && m_input->format == bmdFormat8BitYUV) {
-      /* user-set format was auto or 8BitYUV, change to RGB */
+    if (formatFlags & bmdDetectedVideoInputRGB444)
       pixelFormat = bmdFormat8BitARGB;
-    } else {
-      /* use the user-set format, defaulting to 8BitYUV */
-      pixelFormat = m_input->format;
-    }
 
     g_mutex_lock (&m_input->lock);
     m_input->input->PauseStreams ();

@@ -39,24 +39,11 @@ G_BEGIN_DECLS
 #define GST_IS_COMPOSITOR_CLASS(klass) \
         (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_COMPOSITOR))
 
-#define GST_TYPE_COMPOSITOR_PAD (gst_compositor_pad_get_type())
-#define GST_COMPOSITOR_PAD(obj) \
-        (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_COMPOSITOR_PAD, GstCompositorPad))
-#define GST_COMPOSITOR_PAD_CLASS(klass) \
-        (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_COMPOSITOR_PAD, GstCompositorPadClass))
-#define GST_IS_COMPOSITOR_PAD(obj) \
-        (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_COMPOSITOR_PAD))
-#define GST_IS_COMPOSITOR_PAD_CLASS(klass) \
-        (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_COMPOSITOR_PAD))
-
 typedef struct _GstCompositor GstCompositor;
 typedef struct _GstCompositorClass GstCompositorClass;
 
-typedef struct _GstCompositorPad GstCompositorPad;
-typedef struct _GstCompositorPadClass GstCompositorPadClass;
-
 /**
- * GstCompositorBackground:
+ * GstcompositorBackground:
  * @COMPOSITOR_BACKGROUND_CHECKER: checker pattern background
  * @COMPOSITOR_BACKGROUND_BLACK: solid color black background
  * @COMPOSITOR_BACKGROUND_WHITE: solid color white background
@@ -71,28 +58,6 @@ typedef enum
   COMPOSITOR_BACKGROUND_WHITE,
   COMPOSITOR_BACKGROUND_TRANSPARENT,
 } GstCompositorBackground;
-
-/**
- * GstCompositorOperator:
- * @COMPOSITOR_OPERATOR_SOURCE: Copy the source over the destination,
- *                              without the destination pixels.
- * @COMPOSITOR_OPERATOR_OVER: Blend the source over the destination.
- * @COMPOSITOR_OPERATOR_ADD: Similar to over but add the source and
- *                           destination alpha. Requires output with alpha
- *                           channel.
- *
- * The different blending operators that can be used by compositor.
- *
- * See https://www.cairographics.org/operators/ for some explanation and
- * visualizations.
- *
- */
-typedef enum
-{
-  COMPOSITOR_OPERATOR_SOURCE,
-  COMPOSITOR_OPERATOR_OVER,
-  COMPOSITOR_OPERATOR_ADD,
-} GstCompositorOperator;
 
 /**
  * GstCompositor:
@@ -114,30 +79,7 @@ struct _GstCompositorClass
   GstVideoAggregatorClass parent_class;
 };
 
-/**
- * GstCompositorPad:
- *
- * The opaque #GstCompositorPad structure.
- */
-struct _GstCompositorPad
-{
-  GstVideoAggregatorConvertPad parent;
-
-  /* properties */
-  gint xpos, ypos;
-  gint width, height;
-  gdouble alpha;
-
-  GstCompositorOperator op;
-};
-
-struct _GstCompositorPadClass
-{
-  GstVideoAggregatorConvertPadClass parent_class;
-};
-
 GType gst_compositor_get_type (void);
-GType gst_compositor_pad_get_type (void);
 
 G_END_DECLS
 #endif /* __GST_COMPOSITOR_H__ */

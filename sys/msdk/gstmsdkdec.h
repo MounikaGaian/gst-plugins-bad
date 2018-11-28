@@ -36,8 +36,6 @@
 #include <gst/video/video.h>
 #include "msdk.h"
 #include "gstmsdkcontext.h"
-#include "msdk-enums.h"
-#include "gstmsdkdecproputil.h"
 
 G_BEGIN_DECLS
 
@@ -100,6 +98,7 @@ struct _GstMsdkDec
   /* element properties */
   gboolean hardware;
   guint async_depth;
+  guint output_order;
 };
 
 struct _GstMsdkDecClass

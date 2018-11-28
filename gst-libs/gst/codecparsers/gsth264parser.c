@@ -1343,13 +1343,7 @@ gst_h264_parser_identify_nalu (GstH264NalParser * nalparser,
       gst_h264_parser_identify_nalu_unchecked (nalparser, data, offset, size,
       nalu);
 
-  if (res != GST_H264_PARSER_OK)
-    goto beach;
-
-  /* The two NALs are exactly 1 byte size and are placed at the end of an AU,
-   * there is no need to wait for the following */
-  if (nalu->type == GST_H264_NAL_SEQ_END ||
-      nalu->type == GST_H264_NAL_STREAM_END)
+  if (res != GST_H264_PARSER_OK || nalu->size == 1)
     goto beach;
 
   off2 = scan_for_start_codes (data + nalu->offset, size - nalu->offset);

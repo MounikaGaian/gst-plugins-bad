@@ -46,10 +46,6 @@
 #define MOTIONCELLS_H_
 
 #include <opencv2/core.hpp>
-#if (CV_MAJOR_VERSION >= 4)
-#include <opencv2/core/types_c.h>
-#include <opencv2/core/core_c.h>
-#endif
 
 #include <fstream>
 #include <vector>

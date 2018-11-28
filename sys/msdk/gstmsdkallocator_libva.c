@@ -95,9 +95,6 @@ gst_msdk_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
     format =
         gst_msdk_get_va_rt_format_from_mfx_rt_format (req->Info.ChromaFormat);
 
-    if (format == VA_RT_FORMAT_YUV420 && va_fourcc == VA_FOURCC_P010)
-      format = VA_RT_FORMAT_YUV420_10;
-
     va_status = vaCreateSurfaces (gst_msdk_context_get_handle (context),
         format,
         req->Info.Width, req->Info.Height, surfaces, surfaces_num, &attrib, 1);
@@ -270,7 +267,6 @@ gst_msdk_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * data)
 
     switch (mem_id->image.format.fourcc) {
       case VA_FOURCC_NV12:
-      case VA_FOURCC_P010:
         data->Pitch = mem_id->image.pitches[0];
         data->Y = buf + mem_id->image.offsets[0];
         data->UV = buf + mem_id->image.offsets[1];
@@ -299,9 +295,6 @@ gst_msdk_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * data)
         data->G = data->R + 1;
         data->B = data->R + 2;
         data->A = data->R + 3;
-        break;
-      default:
-        g_assert_not_reached ();
         break;
     }
   } else {
@@ -423,10 +416,6 @@ gst_msdk_export_dmabuf_to_vasurface (GstMsdkContext * context,
     case GST_VIDEO_FORMAT_YUY2:
       va_chroma = VA_RT_FORMAT_YUV422;
       va_fourcc = VA_FOURCC_YUY2;
-      break;
-    case GST_VIDEO_FORMAT_P010_10LE:
-      va_chroma = VA_RT_FORMAT_YUV420_10;
-      va_fourcc = VA_FOURCC_P010;
       break;
     default:
       goto error_unsupported_format;

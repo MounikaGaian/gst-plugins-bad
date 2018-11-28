@@ -3,12 +3,7 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
 
 PROJECT(dshowsrcwrapper)
 
-IF ("${CMAKE_GENERATOR}" MATCHES "Win64")
-  SET(ARCH_ "x86_64")
-ELSE ()
-  SET(ARCH_ "x86")
-ENDIF ()
-SET(GST_INSTALL_BASE "C:\\gstreamer\\1.0\\${ARCH_}" CACHE PATH "Path to the GStreamer install base")
+SET(GST_INSTALL_BASE "C:\\gstreamer\\1.0\\x86" CACHE PATH "Path to the GStreamer install base")
 SET(SDK_INSTALL_BASE "C:\\Program Files\\Microsoft SDKs\\Windows\\v7.1" CACHE PATH "Path to the Windows SDK root")
 
 SET_PROPERTY(
@@ -24,25 +19,18 @@ INCLUDE_DIRECTORIES(
   ${GST_INSTALL_BASE}/lib/glib-2.0/include
   ${GST_INSTALL_BASE}/lib/gstreamer-1.0/include
   ${SDK_INSTALL_BASE}/Samples/multimedia/directshow/baseclasses
+  ${PROJECT_SOURCE_DIR}/../../win32/common
 )
-
-IF ("${CMAKE_GENERATOR}" MATCHES "Win64")
-  SET(ARCH_ "x64/")
-ELSE ()
-  SET(ARCH_ "")
-ENDIF ()
 
 LINK_DIRECTORIES(
   ${GST_INSTALL_BASE}/lib
-  ${SDK_INSTALL_BASE}/Samples/multimedia/directshow/baseclasses/${ARCH_}Release_MBCS
-  ${SDK_INSTALL_BASE}/Samples/multimedia/directshow/baseclasses/${ARCH_}Debug_MBCS
+  ${SDK_INSTALL_BASE}/Samples/multimedia/directshow/baseclasses/Release_MBCS
+  ${SDK_INSTALL_BASE}/Samples/multimedia/directshow/baseclasses/Debug_MBCS
 )
 
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMALE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
 
 ADD_LIBRARY(libgstdshowsrcwrapper SHARED
-  dshowdeviceprovider.cpp
-  dshowdeviceprovider.h
   gstdshow.cpp
   gstdshow.h
   gstdshowfakesink.cpp

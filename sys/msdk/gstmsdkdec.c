@@ -40,6 +40,7 @@
 #include "gstmsdkvideomemory.h"
 #include "gstmsdksystemmemory.h"
 #include "gstmsdkcontextutil.h"
+#include "msdk-enums.h"
 
 GST_DEBUG_CATEGORY_EXTERN (gst_msdkdec_debug);
 #define GST_CAT_DEFAULT gst_msdkdec_debug
@@ -56,8 +57,17 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
             "{ NV12 }") ";")
     );
 
+enum
+{
+  PROP_0,
+  PROP_HARDWARE,
+  PROP_ASYNC_DEPTH,
+  PROP_OUTPUT_ORDER,
+};
+
 #define PROP_HARDWARE_DEFAULT            TRUE
 #define PROP_ASYNC_DEPTH_DEFAULT         1
+#define PROP_OUTPUT_ORDER_DEFAULT        GST_MSDKDEC_OUTPUT_ORDER_DISPLAY
 
 #define IS_ALIGNED(i, n) (((i) & ((n)-1)) == 0)
 
@@ -295,6 +305,10 @@ gst_msdkdec_init_decoder (GstMsdkDec * thiz)
       thiz->use_video_memory ? "video" : "system");
 
   thiz->param.AsyncDepth = thiz->async_depth;
+  /* This is a deprecated attribute in msdk-2017 version, but some
+   * customers still using this for low-latency streaming of non-b-frame
+   * encoded streams */
+  thiz->param.mfx.DecodedOrder = thiz->output_order;
 
   /* We expect msdk to fill the width and height values */
   g_return_val_if_fail (thiz->param.mfx.FrameInfo.Width
@@ -476,7 +490,6 @@ gst_msdkdec_set_src_caps (GstMsdkDec * thiz, gboolean need_allocation)
   GstVideoInfo *vinfo;
   GstVideoAlignment align;
   GstCaps *allocation_caps = NULL;
-  GstVideoFormat format;
   guint width, height;
   const gchar *format_str;
 
@@ -488,19 +501,9 @@ gst_msdkdec_set_src_caps (GstMsdkDec * thiz, gboolean need_allocation)
   height =
       thiz->param.mfx.FrameInfo.CropH ? thiz->param.mfx.
       FrameInfo.CropH : GST_VIDEO_INFO_HEIGHT (&thiz->input_state->info);
-
-  format =
-      gst_msdk_get_video_format_from_mfx_fourcc (thiz->param.mfx.
-      FrameInfo.FourCC);
-
-  if (format == GST_VIDEO_FORMAT_UNKNOWN) {
-    GST_WARNING_OBJECT (thiz, "Failed to find a valid video format\n");
-    return FALSE;
-  }
-
   output_state =
       gst_video_decoder_set_output_state (GST_VIDEO_DECODER (thiz),
-      format, width, height, thiz->input_state);
+      GST_VIDEO_FORMAT_NV12, width, height, thiz->input_state);
   if (!output_state)
     return FALSE;
 
@@ -904,17 +907,16 @@ gst_msdkdec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
       goto done;
     }
 
-    if (!thiz->initialized)
-      hard_reset = TRUE;
-    else if (thiz->allocation_caps) {
+    if (thiz->initialized && thiz->allocation_caps)
       gst_video_info_from_caps (&alloc_info, thiz->allocation_caps);
 
-      /* Check whether we need complete reset for dynamic resolution change */
-      if (thiz->param.mfx.FrameInfo.Width > GST_VIDEO_INFO_WIDTH (&alloc_info)
-          || thiz->param.mfx.FrameInfo.Height >
-          GST_VIDEO_INFO_HEIGHT (&alloc_info))
-        hard_reset = TRUE;
-    }
+    /* Check whether we need complete reset for dynamic resolution change */
+    if (!thiz->initialized || (thiz->initialized &&
+            (thiz->param.mfx.FrameInfo.Width >
+                GST_VIDEO_INFO_WIDTH (&alloc_info)
+                || thiz->param.mfx.FrameInfo.Height >
+                GST_VIDEO_INFO_HEIGHT (&alloc_info))))
+      hard_reset = TRUE;
 
     /* if subclass requested for the force reset */
     if (thiz->force_reset_on_res_change)
@@ -1342,11 +1344,14 @@ gst_msdkdec_set_property (GObject * object, guint prop_id, const GValue * value,
     goto wrong_state;
 
   switch (prop_id) {
-    case GST_MSDKDEC_PROP_HARDWARE:
+    case PROP_HARDWARE:
       thiz->hardware = g_value_get_boolean (value);
       break;
-    case GST_MSDKDEC_PROP_ASYNC_DEPTH:
+    case PROP_ASYNC_DEPTH:
       thiz->async_depth = g_value_get_uint (value);
+      break;
+    case PROP_OUTPUT_ORDER:
+      thiz->output_order = g_value_get_enum (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1371,11 +1376,14 @@ gst_msdkdec_get_property (GObject * object, guint prop_id, GValue * value,
 
   GST_OBJECT_LOCK (thiz);
   switch (prop_id) {
-    case GST_MSDKDEC_PROP_HARDWARE:
+    case PROP_HARDWARE:
       g_value_set_boolean (value, thiz->hardware);
       break;
-    case GST_MSDKDEC_PROP_ASYNC_DEPTH:
+    case PROP_ASYNC_DEPTH:
       g_value_set_uint (value, thiz->async_depth);
+      break;
+    case PROP_OUTPUT_ORDER:
+      g_value_set_enum (value, thiz->output_order);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1421,14 +1429,21 @@ gst_msdkdec_class_init (GstMsdkDecClass * klass)
   decoder_class->flush = GST_DEBUG_FUNCPTR (gst_msdkdec_flush);
   decoder_class->drain = GST_DEBUG_FUNCPTR (gst_msdkdec_drain);
 
-  g_object_class_install_property (gobject_class, GST_MSDKDEC_PROP_HARDWARE,
+  g_object_class_install_property (gobject_class, PROP_HARDWARE,
       g_param_spec_boolean ("hardware", "Hardware", "Enable hardware decoders",
           PROP_HARDWARE_DEFAULT, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  g_object_class_install_property (gobject_class, GST_MSDKDEC_PROP_ASYNC_DEPTH,
+  g_object_class_install_property (gobject_class, PROP_ASYNC_DEPTH,
       g_param_spec_uint ("async-depth", "Async Depth",
           "Depth of asynchronous pipeline",
           1, 20, PROP_ASYNC_DEPTH_DEFAULT,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property (gobject_class, PROP_OUTPUT_ORDER,
+      g_param_spec_enum ("output-order", "DecodedFramesOutputOrder",
+          "Decoded frames output order",
+          gst_msdkdec_output_order_get_type (),
+          PROP_OUTPUT_ORDER_DEFAULT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_static_pad_template (element_class, &src_factory);
@@ -1442,6 +1457,7 @@ gst_msdkdec_init (GstMsdkDec * thiz)
   thiz->tasks = g_array_new (FALSE, TRUE, sizeof (MsdkDecTask));
   thiz->hardware = PROP_HARDWARE_DEFAULT;
   thiz->async_depth = PROP_ASYNC_DEPTH_DEFAULT;
+  thiz->output_order = PROP_OUTPUT_ORDER_DEFAULT;
   thiz->is_packetized = TRUE;
   thiz->do_renego = TRUE;
   thiz->do_realloc = TRUE;

@@ -54,7 +54,6 @@ typedef struct _GstMsdkVP8DecClass GstMsdkVP8DecClass;
 struct _GstMsdkVP8Dec
 {
   GstMsdkDec base;
-  guint output_order;
 };
 
 struct _GstMsdkVP8DecClass

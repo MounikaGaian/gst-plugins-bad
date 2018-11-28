@@ -42,12 +42,7 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#ifdef G_OS_WIN32
-#include <winsock2.h>
-#else
 #include <string.h>
-#include <errno.h>
-#endif
 
 GST_DEBUG_CATEGORY_STATIC (gst_dtls_connection_debug);
 #define GST_CAT_DEFAULT gst_dtls_connection_debug
@@ -602,13 +597,13 @@ log_state (GstDtlsConnection * self, const gchar * str)
   GstDtlsConnectionPrivate *priv = self->priv;
   guint states = 0;
 
-  states |= (!!SSL_is_init_finished (priv->ssl) << 0);
-  states |= (!!SSL_in_init (priv->ssl) << 4);
-  states |= (!!SSL_in_before (priv->ssl) << 8);
-  states |= (!!SSL_in_connect_init (priv->ssl) << 12);
-  states |= (!!SSL_in_accept_init (priv->ssl) << 16);
-  states |= (!!SSL_want_write (priv->ssl) << 20);
-  states |= (!!SSL_want_read (priv->ssl) << 24);
+  states |= (! !SSL_is_init_finished (priv->ssl) << 0);
+  states |= (! !SSL_in_init (priv->ssl) << 4);
+  states |= (! !SSL_in_before (priv->ssl) << 8);
+  states |= (! !SSL_in_connect_init (priv->ssl) << 12);
+  states |= (! !SSL_in_accept_init (priv->ssl) << 16);
+  states |= (! !SSL_want_write (priv->ssl) << 20);
+  states |= (! !SSL_want_read (priv->ssl) << 24);
 
 #if OPENSSL_VERSION_NUMBER < 0x10100001L
   GST_LOG_OBJECT (self, "%s: role=%s buf=(%d,%p:%d/%d) %x|%x %s",
@@ -712,53 +707,36 @@ beach:
   self->priv->keys_exported = TRUE;
 }
 
-static int
-ssl_warn_cb (const char *str, size_t len, void *u)
-{
-  GstDtlsConnection *self = u;
-  GST_WARNING_OBJECT (self, "ssl error: %s", str);
-  return 0;
-}
-
-static int
-ssl_err_cb (const char *str, size_t len, void *u)
-{
-  GstDtlsConnection *self = u;
-  GST_ERROR_OBJECT (self, "ssl error: %s", str);
-  return 0;
-}
-
 static void
 openssl_poll (GstDtlsConnection * self)
 {
   int ret;
+  char buf[512];
   int error;
 
   log_state (self, "poll: before handshake");
 
-  ERR_clear_error ();
   ret = SSL_do_handshake (self->priv->ssl);
 
   log_state (self, "poll: after handshake");
 
-  switch (ret) {
-    case 1:
-      if (!self->priv->keys_exported) {
-        GST_INFO_OBJECT (self,
-            "handshake just completed successfully, exporting keys");
-        export_srtp_keys (self);
-      } else {
-        GST_INFO_OBJECT (self, "handshake is completed");
-      }
-      return;
-    case 0:
+  if (ret == 1) {
+    if (!self->priv->keys_exported) {
+      GST_INFO_OBJECT (self,
+          "handshake just completed successfully, exporting keys");
+      export_srtp_keys (self);
+    } else {
+      GST_INFO_OBJECT (self, "handshake is completed");
+    }
+    return;
+  } else {
+    if (ret == 0) {
       GST_DEBUG_OBJECT (self, "do_handshake encountered EOF");
-      break;
-    case -1:
-      GST_DEBUG_OBJECT (self, "do_handshake encountered BIO error");
-      break;
-    default:
+    } else if (ret == -1) {
+      GST_WARNING_OBJECT (self, "do_handshake encountered BIO error");
+    } else {
       GST_DEBUG_OBJECT (self, "do_handshake returned %d", ret);
+    }
   }
 
   error = SSL_get_error (self->priv->ssl, ret);
@@ -768,9 +746,9 @@ openssl_poll (GstDtlsConnection * self)
       GST_WARNING_OBJECT (self, "no error, handshake should be done");
       break;
     case SSL_ERROR_SSL:
-      GST_ERROR_OBJECT (self, "SSL error");
-      ERR_print_errors_cb (ssl_err_cb, self);
-      return;
+      GST_LOG_OBJECT (self, "SSL error %d: %s", error,
+          ERR_error_string (ERR_get_error (), buf));
+      break;
     case SSL_ERROR_WANT_READ:
       GST_LOG_OBJECT (self, "SSL wants read");
       break;
@@ -778,26 +756,12 @@ openssl_poll (GstDtlsConnection * self)
       GST_LOG_OBJECT (self, "SSL wants write");
       break;
     case SSL_ERROR_SYSCALL:{
-      gchar message[1024] = "<unknown>";
-      gint syserror;
-#ifdef G_OS_WIN32
-      syserror = WSAGetLastError ();
-      FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, syserror, 0, message,
-          sizeof message, NULL);
-#else
-      syserror = errno;
-      strerror_r (syserror, message, sizeof message);
-#endif
-      GST_CAT_LEVEL_LOG (GST_CAT_DEFAULT,
-          syserror != 0 ? GST_LEVEL_WARNING : GST_LEVEL_LOG,
-          self, "SSL syscall error: errno %d: %s", syserror, message);
+      GST_LOG_OBJECT (self, "SSL syscall (error) : %lu", ERR_get_error ());
       break;
     }
     default:
       GST_WARNING_OBJECT (self, "Unknown SSL error: %d, ret: %d", error, ret);
   }
-
-  ERR_print_errors_cb (ssl_warn_cb, self);
 }
 
 static int

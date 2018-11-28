@@ -38,7 +38,7 @@ const gchar *                       _sdp_source_to_string                   (SDP
 
 
 G_GNUC_INTERNAL
-gboolean                            validate_sdp                            (GstWebRTCSignalingState state,
+gboolean                            validate_sdp                            (GstWebRTCBin * webrtc,
                                                                              SDPSource source,
                                                                              GstWebRTCSessionDescription * sdp,
                                                                              GError ** error);
@@ -80,22 +80,5 @@ G_GNUC_INTERNAL
 int                                 _get_sctp_port_from_media               (const GstSDPMedia * media);
 G_GNUC_INTERNAL
 guint64                             _get_sctp_max_message_size_from_media   (const GstSDPMedia * media);
-
-G_GNUC_INTERNAL
-void                                _get_ice_credentials_from_sdp_media     (const GstSDPMessage * sdp,
-                                                                             guint media_idx,
-                                                                             gchar ** ufrag,
-                                                                             gchar ** pwd);
-G_GNUC_INTERNAL
-gboolean                            _message_media_is_datachannel           (const GstSDPMessage * msg,
-                                                                             guint media_id);
-
-G_GNUC_INTERNAL
-gboolean                            _get_bundle_index                       (GstSDPMessage * sdp,
-                                                                             GStrv bundled,
-                                                                             guint * idx);
-G_GNUC_INTERNAL
-gboolean                            _parse_bundle                           (GstSDPMessage * sdp,
-                                                                             GStrv * bundled);
 
 #endif /* __WEBRTC_UTILS_H__ */

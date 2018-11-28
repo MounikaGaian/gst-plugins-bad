@@ -39,20 +39,6 @@ libopencv_headers = [
   'opencv2/video.hpp',
 ]
 
-libopencv4_headers = [
-  'opencv4/opencv2/bgsegm.hpp',
-  'opencv4/opencv2/calib3d.hpp',
-  'opencv4/opencv2/core.hpp',
-  'opencv4/opencv2/imgcodecs/legacy/constants_c.h',
-  'opencv4/opencv2/imgproc/imgproc_c.h',
-  'opencv4/opencv2/core/types_c.h',
-  'opencv4/opencv2/core/core_c.h',
-  'opencv4/opencv2/imgproc.hpp',
-  'opencv4/opencv2/objdetect.hpp',
-  'opencv4/opencv2/opencv.hpp',
-  'opencv4/opencv2/video.hpp',
-]
-
 gstopencv_cargs = ['-DGST_HAAR_CASCADES_DIR="@0@"']
 
 opencv_dep = dependency('opencv', version : ['>= 3.0.0', '< 3.5.0'], required : false)
@@ -65,17 +51,6 @@ if opencv_found
       opencv_found = false
     endif
   endforeach
-else
-  opencv_dep = dependency('opencv4', version : ['>= 4.0.0', '< 4.1.0'], required : false)
-  opencv_found = opencv_dep.found()
-  if opencv_found
-    foreach h : libopencv4_headers
-      if not cxx.has_header(h)
-        message('Needed header "' + h + '" not found')
-        opencv_found = false
-      endif
-    endforeach
-  endif
 endif
 
 if opencv_found
@@ -92,12 +67,7 @@ if opencv_found
     if r.returncode() == 0
       gstopencv_cargs += '-DOPENCV_PATH_NAME="OpenCV"'
     else
-      r = run_command('test', '-d', opencv_prefix + '/share/opencv4')
-      if r.returncode() == 0
-        gstopencv_cargs += '-DOPENCV_PATH_NAME="opencv4"'
-      else
-        error('Unable to detect OpenCV data directory')
-      endif
+      error('Unable to detect OpenCV data directory')
     endif
   endif
   gstopencv = library('gstopencv',

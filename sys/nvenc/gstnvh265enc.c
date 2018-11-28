@@ -41,17 +41,6 @@ GST_DEBUG_CATEGORY_STATIC (gst_nv_h265_enc_debug);
 #define parent_class gst_nv_h265_enc_parent_class
 G_DEFINE_TYPE (GstNvH265Enc, gst_nv_h265_enc, GST_TYPE_NV_BASE_ENC);
 
-#if HAVE_NVENC_GST_GL
-#define GL_CAPS_STR \
-  ";" \
-  "video/x-raw(memory:GLMemory), " \
-  "format = (string) { NV12, Y444 }, " \
-  "width = (int) [ 16, 4096 ], height = (int) [ 16, 2160 ], " \
-  "framerate = (fraction) [0, MAX] "
-#else
-#define GL_CAPS_STR ""
-#endif
-
 /* *INDENT-OFF* */
 static GstStaticPadTemplate sink_factory = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
@@ -59,7 +48,13 @@ static GstStaticPadTemplate sink_factory = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_STATIC_CAPS ("video/x-raw, " "format = (string) { NV12, I420 }, "       // TODO: YV12, Y444 support
         "width = (int) [ 16, 4096 ], height = (int) [ 16, 2160 ], "
         "framerate = (fraction) [0, MAX] "
-        GL_CAPS_STR
+#if HAVE_NVENC_GST_GL
+        ";"
+        "video/x-raw(memory:GLMemory), "
+        "format = (string) { NV12, Y444 }, "
+        "width = (int) [ 16, 4096 ], height = (int) [ 16, 2160 ], "
+        "framerate = (fraction) [0, MAX] "
+#endif
     ));
 
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
@@ -121,7 +116,7 @@ gst_nv_h265_enc_class_init (GstNvH265EncClass * klass)
       "Encode HEVC video streams using NVIDIA's hardware-accelerated NVENC encoder API",
       "Tim-Philipp Müller <tim@centricular.com>, "
       "Matthew Waters <matthew@centricular.com>, "
-      "Seungha Yang <pudding8757@gmail.com>");
+      "Seungha Yang <pudding8757@gmail.com.com>");
 
   GST_DEBUG_CATEGORY_INIT (gst_nv_h265_enc_debug,
       "nvh265enc", 0, "Nvidia HEVC encoder");
